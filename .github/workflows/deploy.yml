@@ -38,7 +38,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: aditirthore/dockerized-flask:latest
+          tags: aditirthore/EC2-Dockerized-Flask:latest
 
 
       # 5. Build and push Nginx image
@@ -48,7 +48,7 @@ jobs:
           context: ./nginx
           file: ./nginx/Dockerfile
           push: true
-          tags: aditirthore/dockerized-flask-nginx:latest
+          tags: aditirthore/EC2-Dockerized-Flask-nginx:latest
 
       # 6. Deploy to EC2
       - name: Deploy to EC2
