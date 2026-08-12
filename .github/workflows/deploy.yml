@@ -6,9 +6,7 @@ on:
       - main
 
 jobs:
-
   build-and-deploy:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -17,7 +15,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-
       # 2. Login to Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v4
@@ -25,11 +22,9 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-
       # 3. Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
-
 
       # 4. Build and push Flask image
       - name: Build and push Flask image
@@ -40,7 +35,6 @@ jobs:
           push: true
           tags: aditirthore/dockerized-flask:latest
 
-
       # 5. Build and push Nginx image
       - name: Build and push Nginx image
         uses: docker/build-push-action@v7
@@ -50,7 +44,7 @@ jobs:
           push: true
           tags: aditirthore/dockerized-flask-nginx:latest
 
-      # 6. Deploy to EC2      
+      # 6. Deploy to EC2
       - name: Deploy to EC2
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
@@ -58,22 +52,68 @@ jobs:
 
         run: |
 
+          echo "================================"
+          echo "Testing EC2 connection"
+          echo "================================"
+
+          echo "EC2 host:"
+          echo "$EC2_HOST"
+
+          echo "Testing port 22..."
+
+          nc -vz -w 10 "$EC2_HOST" 22
+
+          echo "Port 22 is reachable."
+
+          echo "================================"
+          echo "Preparing SSH key"
+          echo "================================"
+
           mkdir -p ~/.ssh
 
           echo "$EC2_SSH_KEY" > ~/.ssh/ec2_key
 
           chmod 600 ~/.ssh/ec2_key
 
-          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+          echo "Key created."
 
-          ssh -i ~/.ssh/ec2_key ubuntu@"$EC2_HOST" << 'EOF'
+          echo "================================"
+          echo "Testing SSH"
+          echo "================================"
+
+          ssh \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=20 \
+            -o BatchMode=yes \
+            -i ~/.ssh/ec2_key \
+            ubuntu@"$EC2_HOST" \
+            "echo 'SSH connection successful'"
+
+          echo "================================"
+          echo "Deploying application"
+          echo "================================"
+
+          ssh \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=20 \
+            -o BatchMode=yes \
+            -i ~/.ssh/ec2_key \
+            ubuntu@"$EC2_HOST" << 'EOF'
 
             cd ~/dockerized-flask
 
+            echo "Pulling latest Docker images..."
+
             docker compose pull
+
+            echo "Starting containers..."
 
             docker compose up -d
 
+            echo "Removing unused images..."
+
             docker image prune -f
+
+            echo "Deployment completed successfully!"
 
           EOF
