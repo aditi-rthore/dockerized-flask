@@ -1,1 +1,1 @@
-# dockerized-flask-application
+# dockerized-flask-application on EC2
