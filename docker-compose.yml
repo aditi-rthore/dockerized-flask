@@ -1,0 +1,28 @@
+services:
+
+  flask:
+    image: aditirthore/dockerized-flask:latest
+    container_name: flask-container
+    restart: always
+
+    expose:
+      - "5000"
+
+    volumes:
+      - uploads:/app/static/files
+
+
+  nginx:
+    image: aditirthore/dockerized-flask-nginx:latest
+    container_name: nginx-container
+    restart: always
+
+    depends_on:
+      - flask
+
+    ports:
+      - "80:80"
+
+
+volumes:
+  uploads:
